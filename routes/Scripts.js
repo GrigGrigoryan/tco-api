@@ -46,6 +46,7 @@ module.exports = async (app, db) => {
 
                 await transaction.commit();
 
+
                 return res.json({
                     status: 'error',
                     message: '',
