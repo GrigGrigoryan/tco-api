@@ -5,46 +5,60 @@ module.exports = async (app, db) => {
     //account calls
     app.post('/account/create', async (req, res) => {
         try {
-            const { balance } = req.body;
             const body = req.body;
 
-            const validator = await Utils.validateAccountCreateData(req.body);
-            if (Object.keys(validator).length) {
-                throw validator;
-            }
-
-            const create = await db.account.create(body);
+            const create = await db.Account.create(body);
             const account = await create.get({plain: true});
+            if (!account) {
+                throw 'account not found';
+            }
+            return res.json({
+                status: 'success',
+                message: 'account created successfully',
+                data: account
+            });
         } catch(err) {
             return res.json({
                 status: 'error',
-                messages: err
+                message: err
             });
         }
     });
 
-    app.put('/account/:id', async (req, res) => {
+    app.put('/account/:account_id', async (req, res) => {
         try {
-            const { id: account_id } = req.params;
+            //open transaction
+            const transaction = await db.sequelize.transaction();
+            const { account_id } = req.params;
             const body = req.body;
 
             //Validate account body
-            const validator = await Utils.validateAccountData(req.body);
-            if (Object.keys(validator).length) {
-                throw validator;
+            try {
+                const validator = await Utils.validateAccountData('put', {...body, account_id});
+                if (Object.keys(validator).length) {
+                    throw validator;
+                }
+
+                let account = await db.Account.update(body, {
+                    where: {id: account_id},
+                }, transaction);
+
+
+                await transaction.commit();
+
+                return res.json({
+                    status: 'error',
+                    message: '',
+                    account
+                });
+            } catch(err) {
+                console.error(err);
+                await transaction.rollback();
             }
-
-            const create = await db.account.create(body);
-            const account = await create.get({plain: true});
-
-            return res.json({
-                status: 'error',
-                account
-            });
         } catch(err) {
             return res.json({
                 status: 'error',
-                messages: err
+                message: err
             });
         }
     });
@@ -68,11 +82,41 @@ module.exports = async (app, db) => {
         }
     });
 
-    app.put('/transaction/update', async (req, res) => {
+    app.put('/transaction/:transaction_id', async (req, res) => {
         try {
+            //open transaction
+            const transaction = await db.sequelize.transaction();
+            const { transaction_id } = req.params;
+            const body = req.body;
 
+            //Validate account body
+            try {
+                const validator = await Utils.validateTransactionData('put', {...body, transaction_id});
+                if (Object.keys(validator).length) {
+                    throw validator;
+                }
+
+                let transactionData = await db.Transaction.update(body, {
+                    where: {id: transaction_id},
+                }, transaction);
+
+
+                await transaction.commit();
+
+                return res.json({
+                    status: 'error',
+                    message: '',
+                    transaction: transactionData
+                });
+            } catch(err) {
+                console.error(err);
+                await transaction.rollback();
+            }
         } catch(err) {
-
+            return res.json({
+                status: 'error',
+                message: err
+            });
         }
     });
 
