@@ -43,7 +43,6 @@ module.exports = async (app, db) => {
                     where: {id: account_id},
                 }, transaction);
 
-
                 await transaction.commit();
 
 
