@@ -7,6 +7,11 @@ module.exports = async (app, db) => {
         try {
             const body = req.body;
 
+            const validator = await Utils.validateAccountData('post', body);
+            if (Object.keys(validator).length) {
+                throw validator;
+            }
+
             const create = await db.Account.create(body);
             const account = await create.get({plain: true});
             if (!account) {

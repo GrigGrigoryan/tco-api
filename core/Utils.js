@@ -9,12 +9,17 @@ module.exports = {
         const { balance, account_id } = data;
         const errors = {};
 
-        //change number when adding new keys to check, default: balance, account_id
+        // change number when adding new keys to check
+        // default: balance, account_id
         if (Object.keys(data).length > 2) {
             errors['body'] = 'Additional body types not supported';
         }
 
         if (reqType === 'put') {
+            if (!balance.length) {
+                errors['balance'] = 'balance not provided';
+            }
+
             if (!account_id.length) {
                 errors['account_id'] = 'parameter account_id not provided';
             }
@@ -60,7 +65,43 @@ module.exports = {
         return errors ? errors : null;
 
     },
-    validateTransactionData:   async (requestType, data) => {
+    validateTransactionData: async (reqType, data) => {
+        const uuidRegexp = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+        const { transaction_id, account_id, amount } = data;
+        const errors = {};
 
+        // change number when adding new keys to check
+        // default: transaction_id, account_id, amount
+        if (Object.keys(data).length > 3) {
+            errors['body'] = 'Additional body types not supported';
+        }
+
+        if (reqType === 'post') {
+            const transaction = await db.Transaction.findAll({where: {id: transaction_id}});
+            if (transaction) {
+                errors['transaction'] = `transaction with transaction_id: ${transaction_id} already exist`;
+            }
+            if (typeof amount === 'undefined') {
+                errors['amount'] = 'amount not provided';
+            }
+
+            if (typeof account_id === 'undefined' || !account_id.length) {
+                errors['account_id'] = 'parameter account_id not provided';
+            }
+            if (typeof transaction_id === 'undefined' || !transaction_id.length) {
+                errors['transaction_id'] = 'parameter transaction_id not provided';
+            }
+
+            if (!uuidRegexp.test(account_id)) {
+                errors['account_id'] = 'account_id must be uuid format';
+            }
+
+            if (!uuidRegexp.test(transaction_id)) {
+                errors['transaction_id'] = 'transaction_id must be uuid format';
+            }
+        }
+
+        console.log({errors});
+        return errors ? errors : null;
     },
 };

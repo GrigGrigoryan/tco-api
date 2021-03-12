@@ -27,9 +27,6 @@ module.exports = async (app, db) => {
 
   app.get('/max_transaction_volume', async (req, res) => {
     try {
-      const {  } = req.body;
-
-
       res.send({
         status: 'success',
       });

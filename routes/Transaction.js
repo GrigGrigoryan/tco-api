@@ -7,64 +7,61 @@ const Utils = require('../core/Utils');
 module.exports = async (app, db) => {
     app.get('/transaction/:transaction_id', async (req, res) => {
         try {
-            const transaction = await db.sequelize.transaction();
             const {params: {transaction_id}} = req;
 
-            try {
-                let transaction = await db.Transaction.findOne({
-                    where: {id: transaction_id},
-                    raw: true,
-                    transaction
-                });
+            let transactionData = await db.Transaction.findOne({
+                where: {id: transaction_id},
+                raw: true,
+            });
 
-                await transaction.commit();
-
-                return res.json({payload:  queryBuilder});
-            } catch (err) {
-                console.error(err);
-                await transaction.rollback();
-            }
-
-            return res.json({payload: 'response'});
-        } catch (e) {
-            return res.json({'payload': {status: 'error'}});
+            return res.json({
+                status: 'error',
+                message: '',
+                data: transactionData
+            });
+        } catch (err) {
+            res.send({
+                status: 'error',
+                message: err
+            });
         }
     });
 
     app.post('/amount', async (req, res) => {
         try {
-            //open transaction stream
+            //open transaction
             const transaction = await db.sequelize.transaction();
-            const {body, query, header } = req;
-            console.log(header);
+            const {body, headers } = req;
+            const transaction_id = headers['transaction-id'];
 
-            const validator = await Utils.validateAccountCreateData(body);
+            const validator = await Utils.validateTransactionData('post', {...body, transaction_id});
+            console.log(validator);
+            if (Object.keys(validator.errors).length) {
+                throw validator;
+            }
 
             try {
-                const transaction = await db.transaction.create({});
-            } catch(e) {
+                let parsedAmount = parseInt(body.amount);
+                let transactionData = await db.Transaction.create({
+                    account_id: body.account_id,
+                    amount: parsedAmount
+                }, transaction);
 
+                //commit transaction
+                await transaction.commit();
+
+                return res.json({
+                    status: 'error',
+                    message: '',
+                    data: transactionData
+                });
+            } catch(err) {
+                console.error(err);
+                //rollback transaction
+                await transaction.rollback();
             }
-            let { client_id, message_id } = req.params;
-            if (!client_id) throw 'client_id not provided';
-
-            let options = req.body;
-            if (message_id && !options.message_id) {
-                options['message_id'] = message_id;
-            }
-
-            const messages = await db.getClientMessagesById(client_id, options);
-
-            if (messages.status && messages.status === 'error') {
-                throw messages.err;
-            }
-
-            res.send({
-                status: 'success',
-                messages
-            });
         } catch (err) {
-            res.send({
+            res.json({
                 status: 'error',
                 message: err
             });
