@@ -79,6 +79,7 @@ module.exports = {
         if (reqType === 'post') {
             const transaction = await db.Transaction.findOne({where: {id: transaction_id}});
             if (transaction) {
+                errors['idempotent'] = true;
                 errors['transaction'] = `transaction with transaction_id: ${transaction_id} already exist`;
             }
             if (typeof amount === 'undefined') {

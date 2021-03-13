@@ -46,10 +46,17 @@ module.exports = async (app, db) => {
 
             const validator = await Utils.validateTransactionData('post', {...body, transaction_id});
             if (Object.keys(validator).length) {
-                throw {
-                    status: 400,
-                    message: validator
-                };
+                if (validator.idempotent) {
+                    throw {
+                        status: 200,
+                        message: 'Transaction already exist.'
+                    };
+                } else {
+                    throw {
+                        status: 400,
+                        message: validator
+                    };
+                }
             }
 
             //open transaction
