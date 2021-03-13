@@ -13,7 +13,7 @@ module.exports = async (app, db) => {
         }
       }
 
-      const account = await db.Account.findOne({where: {id: account_id}});
+      const account = await db.Account.findOne({where: {id: account_id}, raw: true});
       if (!account) {
         throw {
           status: 404,
@@ -21,45 +21,44 @@ module.exports = async (app, db) => {
         };
       }
 
-      return res.send({
-        status: 200,
-        body: account
-      });
+      return res.status(200).send(account);
     } catch (err) {
       console.log(err);
-      return res.send({
-        status: err.status,
-        message: err.message
-      });
-    }
-  });
-
-  app.get('/max_transaction_volume', async (req, res) => {
-    try {
-      const { account_id } = req.params;
-      const validator = await Utils.validateAccountData('GET', {account_id});
-
-      if (Object.keys(validator).length) {
-        throw {
-          status: 400,
-          message: validator
-        }
-      }
-
-      let account = await db.Account.findOne({where: {id: account_id}});
-      if (!account) {
-        throw {
-          status: 404,
-          message: 'Account not found.'
-        };
-      }
-
-      return res.send({
-        status: 'Account details.',
-        body: account
-      });
-    } catch (err) {
       return res.status(err.status).send(err.message);
     }
   });
+
+  // app.get('/max_transaction_volume', async (req, res) => {
+  //   try {
+  //     const { account_id } = req.params;
+  //     const validator = await Utils.validateAccountData('GET', {account_id});
+  //
+  //     if (Object.keys(validator).length) {
+  //       throw {
+  //         status: 400,
+  //         message: validator
+  //       }
+  //     }
+  //
+  //     let account = await db.Account.findOne({where: {id: account_id}});
+  //     if (!account) {
+  //       throw {
+  //         status: 404,
+  //         message: 'Account not found.'
+  //       };
+  //     }
+  //
+  //     return res.json({
+  //       status: 200,
+  //       message: 'Account details.',
+  //       body: account
+  //     });
+  //   } catch (err) {
+  //     console.error(err);
+  //     return res.json({
+  //       status: err.status,
+  //       message: err.message,
+  //     });
+  //   }
+  // });
 };

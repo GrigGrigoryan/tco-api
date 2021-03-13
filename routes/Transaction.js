@@ -11,7 +11,7 @@ module.exports = async (app, db) => {
                 };
             }
 
-            let transactionData = await db.Transaction.findOne({where: {id: transaction_id}});
+            let transactionData = await db.Transaction.findOne({where: {id: transaction_id}, raw: true});
 
             if (!transactionData) {
                 throw {
@@ -20,16 +20,10 @@ module.exports = async (app, db) => {
                 }
             }
 
-            return res.send({
-                status: 200,
-                body: transactionData
-            });
+            return res.status(200).send(transactionData)
         } catch (err) {
             console.log(err);
-            res.send({
-                status: err.status,
-                message: err.message
-            });
+            return res.status(err.status).send(err.message)
         }
     });
 
@@ -73,30 +67,30 @@ module.exports = async (app, db) => {
                 let transactionData = await createTransaction.get({plain:true});
                 console.log(`Transaction created. Data: ${JSON.stringify(transactionData)}`);
 
-                let accountData = await db.Account.findOne({where: {id: body.account_id}});
+                let accountData = await db.Account.findOne({where: {id: body.account_id}, raw: true});
+                console.log('accountData', accountData);
                 if (!accountData) {
-                    accountData = await db.Account.create({id: body.account_id, balance: body.amount});
+                    const create = await db.Account.create({id: body.account_id, balance: body.amount});
+                    accountData = create.get({plain: true});
                     console.log(`Account created. Data: ${JSON.stringify(accountData)}`);
                 } else {
                     const updatedBalance = accountData.balance + IntAmount;
 
+                    console.log(typeof updatedBalance, updatedBalance);
                     const updatedAccountData = await db.Account.update({
                         balance: updatedBalance,
                     }, {
                         where: {id: body.account_id},
-                        raw: false
+                        returning: true
                     }, transaction);
 
-                    console.log(`Account updated. Data: ${JSON.stringify(updatedAccountData)}`);
+                    console.log(`Account rows updated. ${JSON.stringify(updatedAccountData[1])}`);
                 }
 
                 //commit transaction
                 await transaction.commit();
 
-                return res.send({
-                    status: 200,
-                    body: transactionData
-                });
+                return res.status(200).send(transactionData);
             } catch(err) {
                 console.error(err);
                 //rollback transaction
@@ -104,10 +98,7 @@ module.exports = async (app, db) => {
             }
         } catch (err) {
             console.log(err);
-            res.send({
-                status: err.status,
-                message: err.message
-            });
+            res.status(err.status).send(err.message);
         }
     });
 };
