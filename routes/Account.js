@@ -3,38 +3,63 @@ const Utils = require('../core/Utils');
 module.exports = async (app, db) => {
   app.get('/balance/:account_id', async (req, res) => {
     try {
-      const { account_id }  = req.params;
-      if (!account_id) {
-          throw 'account_id not provided';
+      const { account_id } = req.params;
+      const validator = await Utils.validateAccountData('GET', {account_id});
+
+      if (Object.keys(validator).length) {
+        throw {
+          status: 400,
+          message: validator
+        }
       }
 
-      let account = await db.account.findOne({where: account_id, raw: true});
+      const account = await db.Account.findOne({where: {id: account_id}});
       if (!account) {
-          throw `Account with uuid: ${account_id} not found`;
+        throw {
+          status: 404,
+          message: 'Account not found.'
+        };
       }
 
-      return res.json({
-        status: 'success',
-        data: account
+      return res.send({
+        status: 200,
+        body: account
       });
     } catch (err) {
-      return res.json({
-        status: 'error',
-        message: err
+      console.log(err);
+      return res.send({
+        status: err.status,
+        message: err.message
       });
     }
   });
 
   app.get('/max_transaction_volume', async (req, res) => {
     try {
-      res.send({
-        status: 'success',
+      const { account_id } = req.params;
+      const validator = await Utils.validateAccountData('GET', {account_id});
+
+      if (Object.keys(validator).length) {
+        throw {
+          status: 400,
+          message: validator
+        }
+      }
+
+      let account = await db.Account.findOne({where: {id: account_id}});
+      if (!account) {
+        throw {
+          status: 404,
+          message: 'Account not found.'
+        };
+      }
+
+      return res.send({
+        status: 'Account details.',
+        body: account
       });
     } catch (err) {
-      res.send({
-        status: 'error',
-        message: err
-      });
+      return res.status(err.status).send(err.message);
     }
   });
 };

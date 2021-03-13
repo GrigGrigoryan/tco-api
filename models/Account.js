@@ -15,6 +15,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Account.init({
+    id: {
+      allowNull: false,
+      type: DataTypes.UUID,
+      primaryKey: true,
+    },
     balance: {
       allowNull: false,
       defaultValue: 0,

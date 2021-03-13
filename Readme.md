@@ -21,5 +21,6 @@
 # Todos
 
 * fix tester.
+* make code more modular
 * write missing codes for some endpoints.
 * make relations with tables and get max transaction volume data.

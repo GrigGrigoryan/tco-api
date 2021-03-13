@@ -5,7 +5,6 @@ module.exports = {
       id: {
         primaryKey: true,
         allowNull: false,
-        defaultValue: Sequelize.UUIDV1,
         type: Sequelize.UUID,
       },
       balance: {

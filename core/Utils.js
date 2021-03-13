@@ -19,14 +19,14 @@ module.exports = {
             if (!balance.length) {
                 errors['balance'] = 'balance not provided';
             }
+        }
 
-            if (!account_id.length) {
-                errors['account_id'] = 'parameter account_id not provided';
-            }
+        if (!account_id.length) {
+            errors['account_id'] = 'parameter account_id not provided';
+        }
 
-            if (!uuidRegexp.test(account_id)) {
-                errors['account_id'] = 'account_id must be uuid format';
-            }
+        if (!uuidRegexp.test(account_id)) {
+            errors['account_id'] = 'account_id must be uuid format';
         }
 
         // if (!username.length || !firstname.length || !lastname.length || !email.length || !password.length || !repeat_password.length) {
@@ -77,7 +77,7 @@ module.exports = {
         }
 
         if (reqType === 'post') {
-            const transaction = await db.Transaction.findAll({where: {id: transaction_id}});
+            const transaction = await db.Transaction.findOne({where: {id: transaction_id}});
             if (transaction) {
                 errors['transaction'] = `transaction with transaction_id: ${transaction_id} already exist`;
             }
@@ -101,7 +101,6 @@ module.exports = {
             }
         }
 
-        console.log({errors});
         return errors ? errors : null;
     },
 };
